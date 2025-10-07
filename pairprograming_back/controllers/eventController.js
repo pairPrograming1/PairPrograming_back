@@ -1,12 +1,19 @@
-const UserHandler = require("../handlers/userHandler");
+const EventHandler = require("../handlers/eventHandler");
 
-class UserController {
-  static async getUsers(req, res) {
+class EventController {
+  static async getEvents(req, res) {
     try {
-      const { page = 1, limit = 10, isActive, role, search } = req.query;
-      const filters = { isActive, role, search };
+      const {
+        page = 1,
+        limit = 10,
+        type,
+        status,
+        startDate,
+        endDate,
+      } = req.query;
+      const filters = { type, status, startDate, endDate };
 
-      const result = await UserHandler.getAllUsers(page, limit, filters);
+      const result = await EventHandler.getAllEvents(page, limit, filters);
       res.status(200).json(result);
     } catch (error) {
       res.status(500).json({
@@ -16,13 +23,13 @@ class UserController {
     }
   }
 
-  static async getUser(req, res) {
+  static async getEvent(req, res) {
     try {
       const { id } = req.params;
-      const result = await UserHandler.getUserById(id);
+      const result = await EventHandler.getEventById(id);
       res.status(200).json(result);
     } catch (error) {
-      if (error.message === "Usuario no encontrado") {
+      if (error.message === "Evento no encontrado") {
         res.status(404).json({
           success: false,
           error: error.message,
@@ -36,22 +43,44 @@ class UserController {
     }
   }
 
-  static async createUser(req, res) {
+  static async createEvent(req, res) {
     try {
-      const userData = req.body;
+      const eventData = req.body;
 
-      if (!userData.name || !userData.email) {
+      if (!eventData.title || !eventData.startDate || !eventData.endDate) {
         return res.status(400).json({
           success: false,
-          error: "Nombre y email son requeridos",
+          error: "Título, fecha de inicio y fecha de fin son requeridos",
         });
       }
 
-      const result = await UserHandler.createUser(userData);
+      const result = await EventHandler.createEvent(eventData);
       res.status(201).json(result);
     } catch (error) {
-      if (error.message.includes("El email ya está registrado")) {
-        res.status(409).json({
+      if (error.message.includes("Error de validación")) {
+        res.status(400).json({
+          success: false,
+          error: error.message,
+        });
+      } else {
+        res.status(500).json({
+          success: false,
+          error: error.message,
+        });
+      }
+    }
+  }
+
+  static async updateEvent(req, res) {
+    try {
+      const { id } = req.params;
+      const eventData = req.body;
+
+      const result = await EventHandler.updateEvent(id, eventData);
+      res.status(200).json(result);
+    } catch (error) {
+      if (error.message === "Evento no encontrado") {
+        res.status(404).json({
           success: false,
           error: error.message,
         });
@@ -69,26 +98,14 @@ class UserController {
     }
   }
 
-  static async updateUser(req, res) {
+  static async deleteEvent(req, res) {
     try {
       const { id } = req.params;
-      const userData = req.body;
-
-      const result = await UserHandler.updateUser(id, userData);
+      const result = await EventHandler.deleteEvent(id);
       res.status(200).json(result);
     } catch (error) {
-      if (error.message === "Usuario no encontrado") {
+      if (error.message === "Evento no encontrado") {
         res.status(404).json({
-          success: false,
-          error: error.message,
-        });
-      } else if (error.message.includes("El email ya está registrado")) {
-        res.status(409).json({
-          success: false,
-          error: error.message,
-        });
-      } else if (error.message.includes("Error de validación")) {
-        res.status(400).json({
           success: false,
           error: error.message,
         });
@@ -101,25 +118,17 @@ class UserController {
     }
   }
 
-  static async deleteUser(req, res) {
+  static async getUpcomingEvents(req, res) {
     try {
-      const { id } = req.params;
-      const result = await UserHandler.deleteUser(id);
+      const result = await EventHandler.getUpcomingEvents();
       res.status(200).json(result);
     } catch (error) {
-      if (error.message === "Usuario no encontrado") {
-        res.status(404).json({
-          success: false,
-          error: error.message,
-        });
-      } else {
-        res.status(500).json({
-          success: false,
-          error: error.message,
-        });
-      }
+      res.status(500).json({
+        success: false,
+        error: error.message,
+      });
     }
   }
 }
 
-module.exports = UserController;
+module.exports = EventController;

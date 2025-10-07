@@ -1,12 +1,12 @@
-const UserHandler = require("../handlers/userHandler");
+const ServiceHandler = require("../handlers/serviceHandler");
 
-class UserController {
-  static async getUsers(req, res) {
+class ServiceController {
+  static async getServices(req, res) {
     try {
-      const { page = 1, limit = 10, isActive, role, search } = req.query;
-      const filters = { isActive, role, search };
+      const { page = 1, limit = 10, category, isActive, search } = req.query;
+      const filters = { category, isActive, search };
 
-      const result = await UserHandler.getAllUsers(page, limit, filters);
+      const result = await ServiceHandler.getAllServices(page, limit, filters);
       res.status(200).json(result);
     } catch (error) {
       res.status(500).json({
@@ -16,13 +16,13 @@ class UserController {
     }
   }
 
-  static async getUser(req, res) {
+  static async getService(req, res) {
     try {
       const { id } = req.params;
-      const result = await UserHandler.getUserById(id);
+      const result = await ServiceHandler.getServiceById(id);
       res.status(200).json(result);
     } catch (error) {
-      if (error.message === "Usuario no encontrado") {
+      if (error.message === "Servicio no encontrado") {
         res.status(404).json({
           success: false,
           error: error.message,
@@ -36,22 +36,48 @@ class UserController {
     }
   }
 
-  static async createUser(req, res) {
+  static async createService(req, res) {
     try {
-      const userData = req.body;
+      const serviceData = req.body;
 
-      if (!userData.name || !userData.email) {
+      if (
+        !serviceData.title ||
+        !serviceData.description ||
+        !serviceData.category
+      ) {
         return res.status(400).json({
           success: false,
-          error: "Nombre y email son requeridos",
+          error: "Título, descripción y categoría son requeridos",
         });
       }
 
-      const result = await UserHandler.createUser(userData);
+      const result = await ServiceHandler.createService(serviceData);
       res.status(201).json(result);
     } catch (error) {
-      if (error.message.includes("El email ya está registrado")) {
-        res.status(409).json({
+      if (error.message.includes("Error de validación")) {
+        res.status(400).json({
+          success: false,
+          error: error.message,
+        });
+      } else {
+        res.status(500).json({
+          success: false,
+          error: error.message,
+        });
+      }
+    }
+  }
+
+  static async updateService(req, res) {
+    try {
+      const { id } = req.params;
+      const serviceData = req.body;
+
+      const result = await ServiceHandler.updateService(id, serviceData);
+      res.status(200).json(result);
+    } catch (error) {
+      if (error.message === "Servicio no encontrado") {
+        res.status(404).json({
           success: false,
           error: error.message,
         });
@@ -69,26 +95,14 @@ class UserController {
     }
   }
 
-  static async updateUser(req, res) {
+  static async deleteService(req, res) {
     try {
       const { id } = req.params;
-      const userData = req.body;
-
-      const result = await UserHandler.updateUser(id, userData);
+      const result = await ServiceHandler.deleteService(id);
       res.status(200).json(result);
     } catch (error) {
-      if (error.message === "Usuario no encontrado") {
+      if (error.message === "Servicio no encontrado") {
         res.status(404).json({
-          success: false,
-          error: error.message,
-        });
-      } else if (error.message.includes("El email ya está registrado")) {
-        res.status(409).json({
-          success: false,
-          error: error.message,
-        });
-      } else if (error.message.includes("Error de validación")) {
-        res.status(400).json({
           success: false,
           error: error.message,
         });
@@ -101,25 +115,17 @@ class UserController {
     }
   }
 
-  static async deleteUser(req, res) {
+  static async getServiceCategories(req, res) {
     try {
-      const { id } = req.params;
-      const result = await UserHandler.deleteUser(id);
+      const result = await ServiceHandler.getServiceCategories();
       res.status(200).json(result);
     } catch (error) {
-      if (error.message === "Usuario no encontrado") {
-        res.status(404).json({
-          success: false,
-          error: error.message,
-        });
-      } else {
-        res.status(500).json({
-          success: false,
-          error: error.message,
-        });
-      }
+      res.status(500).json({
+        success: false,
+        error: error.message,
+      });
     }
   }
 }
 
-module.exports = UserController;
+module.exports = ServiceController;

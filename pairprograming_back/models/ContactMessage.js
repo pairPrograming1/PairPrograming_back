@@ -1,8 +1,8 @@
 const sequelize = require("../config/sequelize");
 const { DataTypes } = require("sequelize");
 
-const User = sequelize.define(
-  "User",
+const ContactMessage = sequelize.define(
+  "ContactMessage",
   {
     id: {
       type: DataTypes.INTEGER,
@@ -16,7 +16,6 @@ const User = sequelize.define(
     email: {
       type: DataTypes.STRING(100),
       allowNull: false,
-      unique: true,
       validate: {
         isEmail: true,
       },
@@ -29,39 +28,44 @@ const User = sequelize.define(
       type: DataTypes.STRING(100),
       allowNull: true,
     },
-    role: {
-      type: DataTypes.ENUM("admin", "client", "guest"),
-      defaultValue: "guest",
+    message: {
+      type: DataTypes.TEXT,
+      allowNull: false,
     },
-    isActive: {
-      type: DataTypes.BOOLEAN,
-      defaultValue: true,
-      field: "is_active",
-    },
-    profileData: {
-      type: DataTypes.JSONB,
+    subject: {
+      type: DataTypes.STRING(200),
       allowNull: true,
-      field: "profile_data",
+    },
+    status: {
+      type: DataTypes.ENUM("new", "read", "replied", "archived"),
+      defaultValue: "new",
+    },
+    source: {
+      type: DataTypes.STRING(50),
+      defaultValue: "website",
+    },
+    priority: {
+      type: DataTypes.ENUM("low", "medium", "high"),
+      defaultValue: "medium",
     },
   },
   {
-    tableName: "users",
+    tableName: "contact_messages",
     timestamps: true,
     createdAt: "created_at",
     updatedAt: "updated_at",
     indexes: [
       {
-        unique: true,
-        fields: ["email"],
+        fields: ["status"],
       },
       {
-        fields: ["is_active"],
+        fields: ["priority"],
       },
       {
-        fields: ["role"],
+        fields: ["created_at"],
       },
     ],
   }
 );
 
-module.exports = User;
+module.exports = ContactMessage;
