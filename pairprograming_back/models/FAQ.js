@@ -1,67 +1,70 @@
 const sequelize = require("../config/sequelize");
 const { DataTypes } = require("sequelize");
 
-const User = sequelize.define(
-  "User",
+const FAQ = sequelize.define(
+  "FAQ",
   {
     id: {
       type: DataTypes.INTEGER,
       primaryKey: true,
       autoIncrement: true,
     },
-    name: {
+    question: {
+      type: DataTypes.TEXT,
+      allowNull: false,
+    },
+    answer: {
+      type: DataTypes.TEXT,
+      allowNull: false,
+    },
+    category: {
       type: DataTypes.STRING(100),
       allowNull: false,
     },
-    email: {
-      type: DataTypes.STRING(100),
-      allowNull: false,
-      unique: true,
-      validate: {
-        isEmail: true,
-      },
-    },
-    phone: {
-      type: DataTypes.STRING(20),
+    icon: {
+      type: DataTypes.STRING(50),
       allowNull: true,
     },
-    company: {
-      type: DataTypes.STRING(100),
-      allowNull: true,
-    },
-    role: {
-      type: DataTypes.ENUM("admin", "client", "guest"),
-      defaultValue: "guest",
+    order: {
+      type: DataTypes.INTEGER,
+      defaultValue: 0,
     },
     isActive: {
       type: DataTypes.BOOLEAN,
       defaultValue: true,
       field: "is_active",
     },
-    profileData: {
-      type: DataTypes.JSONB,
-      allowNull: true,
-      field: "profile_data",
+    views: {
+      type: DataTypes.INTEGER,
+      defaultValue: 0,
+    },
+    helpful: {
+      type: DataTypes.INTEGER,
+      defaultValue: 0,
+    },
+    notHelpful: {
+      type: DataTypes.INTEGER,
+      defaultValue: 0,
+      field: "not_helpful",
     },
   },
   {
-    tableName: "users",
+    tableName: "faqs",
     timestamps: true,
     createdAt: "created_at",
     updatedAt: "updated_at",
     indexes: [
       {
-        unique: true,
-        fields: ["email"],
+        fields: ["category"],
       },
       {
         fields: ["is_active"],
       },
       {
-        fields: ["role"],
+        fields: ["order"],
       },
     ],
   }
 );
 
-module.exports = User;
+module.exports = FAQ;

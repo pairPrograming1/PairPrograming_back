@@ -2,11 +2,8 @@ const express = require("express");
 const router = express.Router();
 const UserController = require("../controllers/userController");
 
-// GET /api/users - Obtener todos los usuarios (con paginación)
+// GET /api/users - Obtener todos los usuarios
 router.get("/", UserController.getUsers);
-
-// GET /api/users/search - Buscar usuarios
-router.get("/search", UserController.searchUsers);
 
 // GET /api/users/:id - Obtener usuario por ID
 router.get("/:id", UserController.getUser);

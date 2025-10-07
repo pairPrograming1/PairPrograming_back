@@ -1,15 +1,28 @@
 const User = require("../models/User");
 
 class UserHandler {
-  // Obtener todos los usuarios con paginación
-  static async getAllUsers(page = 1, limit = 10) {
+  static async getAllUsers(page = 1, limit = 10, filters = {}) {
     try {
       const offset = (page - 1) * limit;
+      const whereClause = {};
+
+      // Aplicar filtros
+      if (filters.isActive !== undefined) {
+        whereClause.isActive = filters.isActive;
+      }
+      if (filters.role) {
+        whereClause.role = filters.role;
+      }
+      if (filters.search) {
+        whereClause.name = { [User.sequelize.Op.iLike]: `%${filters.search}%` };
+      }
 
       const { count, rows: users } = await User.findAndCountAll({
+        where: whereClause,
         limit: parseInt(limit),
         offset: offset,
         order: [["created_at", "DESC"]],
+        attributes: { exclude: ["profileData"] }, // Excluir datos sensibles
       });
 
       return {
@@ -27,7 +40,6 @@ class UserHandler {
     }
   }
 
-  // Obtener usuario por ID
   static async getUserById(id) {
     try {
       const user = await User.findByPk(id);
@@ -40,14 +52,13 @@ class UserHandler {
     }
   }
 
-  // Crear nuevo usuario
   static async createUser(userData) {
     try {
-      // Normalizar email a minúsculas
       userData.email = userData.email.toLowerCase();
 
-      const existingUser = await User.findByEmail(userData.email);
-
+      const existingUser = await User.findOne({
+        where: { email: userData.email },
+      });
       if (existingUser) {
         throw new Error("El email ya está registrado");
       }
@@ -67,7 +78,6 @@ class UserHandler {
     }
   }
 
-  // Actualizar usuario
   static async updateUser(id, userData) {
     try {
       const user = await User.findByPk(id);
@@ -75,11 +85,8 @@ class UserHandler {
         throw new Error("Usuario no encontrado");
       }
 
-      // Normalizar email si se está actualizando
       if (userData.email) {
         userData.email = userData.email.toLowerCase();
-
-        // Verificar si el email ya existe en otro usuario
         const existingUser = await User.findOne({
           where: {
             email: userData.email,
@@ -107,7 +114,6 @@ class UserHandler {
     }
   }
 
-  // Eliminar usuario (soft delete)
   static async deleteUser(id) {
     try {
       const user = await User.findByPk(id);
@@ -115,51 +121,13 @@ class UserHandler {
         throw new Error("Usuario no encontrado");
       }
 
-      // Opción 1: Eliminación suave (recomendado)
       await user.update({ isActive: false });
-
-      // Opción 2: Eliminación permanente (descomentar si lo necesitas)
-      // await user.destroy();
-
       return {
         success: true,
         message: "Usuario desactivado exitosamente",
       };
     } catch (error) {
       throw new Error(`Error al eliminar usuario: ${error.message}`);
-    }
-  }
-
-  // Buscar usuarios por nombre
-  static async searchUsers(searchTerm, page = 1, limit = 10) {
-    try {
-      const offset = (page - 1) * limit;
-      const { Op } = require("sequelize");
-
-      const { count, rows: users } = await User.findAndCountAll({
-        where: {
-          [Op.or]: [
-            { name: { [Op.iLike]: `%${searchTerm}%` } },
-            { email: { [Op.iLike]: `%${searchTerm}%` } },
-          ],
-        },
-        limit: parseInt(limit),
-        offset: offset,
-        order: [["created_at", "DESC"]],
-      });
-
-      return {
-        success: true,
-        data: users,
-        pagination: {
-          page: parseInt(page),
-          limit: parseInt(limit),
-          total: count,
-          pages: Math.ceil(count / limit),
-        },
-      };
-    } catch (error) {
-      throw new Error(`Error al buscar usuarios: ${error.message}`);
     }
   }
 }
